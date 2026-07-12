@@ -12,10 +12,10 @@ import (
 
 // Struct to hold form data and validation errors for the form fields
 type snippetCreateForm struct {
-	Title   string
-	Content string
-	Expires int
-	validator.Validator
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires"`
+	validator.Validator `form:"-"`
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -79,19 +79,14 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Get the expires number string from the form data and try to convert to integer
-	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
+	// Create empty form struct
+	var form snippetCreateForm
+
+	// Call decode method of the form decoder
+	err = app.formDecoder.Decode(&form, r.PostForm)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
-	}
-
-	// Create an instance of the snippetCreateForm struct containing the values
-	// from the form and an empty map for any validation errors.
-	form := snippetCreateForm{
-		Title:   r.PostForm.Get("title"),
-		Content: r.PostForm.Get("content"),
-		Expires: expires,
 	}
 
 	// Use the new validator to validate form fields
