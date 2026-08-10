@@ -68,18 +68,17 @@ func main() {
 
 	// initialize server struct
 	srv := &http.Server{
-		Addr:    *addr,
-		Handler: app.routes(),
+		Addr:     *addr,
+		Handler:  app.routes(),
+		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
 	logger.Info("starting server", "addr", *addr)
 
 	// Call listenAndServe() on the server struct to start the server
 	err = srv.ListenAndServe()
-	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
-	}
+	logger.Error(err.Error())
+	os.Exit(1)
 }
 
 // The openDB() function wraps sql.Open() and returns a sql.DB connection pool
