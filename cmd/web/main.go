@@ -76,7 +76,7 @@ func main() {
 	logger.Info("starting server", "addr", *addr)
 
 	// Call listenAndServe() on the server struct to start the server
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	logger.Error(err.Error())
 	os.Exit(1)
 }
