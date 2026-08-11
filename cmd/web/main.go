@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"flag"
 	"html/template"
@@ -53,7 +54,7 @@ func main() {
 	// Initialize a new form decoder
 	formDecoder := form.NewDecoder()
 
-	// Imitialize a new session manager
+	// Initialize a new session manager
 	sessionManager := scs.New()
 	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
@@ -66,11 +67,17 @@ func main() {
 		sessionManager: sessionManager,
 	}
 
-	// initialize server struct
+	// Create TLS configuration struct
+	tlsConfig := &tls.Config{
+		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+	}
+
+	// Initialize server struct
 	srv := &http.Server{
-		Addr:     *addr,
-		Handler:  app.routes(),
-		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
+		Addr:      *addr,
+		Handler:   app.routes(),
+		ErrorLog:  slog.NewLogLogger(logger.Handler(), slog.LevelError),
+		TLSConfig: tlsConfig,
 	}
 
 	logger.Info("starting server", "addr", *addr)
