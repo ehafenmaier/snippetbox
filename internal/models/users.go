@@ -2,7 +2,12 @@ package models
 
 import (
 	"database/sql"
+	"errors"
+	"strings"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // User struct. Notice how the field names and types align
@@ -22,6 +27,28 @@ type UserModel struct {
 
 // Insert method to add a new record to the "users" table.
 func (m *UserModel) Insert(name, email, password string) error {
+	// Create a bcrypt hash of the plain-text password.
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return err
+	}
+
+	stmt := `INSERT INTO users (name, email, hashed_password, created)
+    VALUES(?, ?, ?, UTC_TIMESTAMP())`
+
+	// Use the Exec() method to insert the user details and hashed password
+	// into the users table.
+	_, err = m.DB.Exec(stmt, name, email, string(hashedPassword))
+	if err != nil {
+		// Check if the error is a MySQL error and if it's a duplicate entry for the email
+		if mySQLError, ok := errors.AsType[*mysql.MySQLError](err); ok {
+			if mySQLError.Number == 1062 && strings.Contains(mySQLError.Message, "users_uc_email") {
+				return ErrDuplicateEmail
+			}
+		}
+		return err
+	}
+
 	return nil
 }
 
